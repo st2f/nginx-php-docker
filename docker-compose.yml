@@ -1,0 +1,36 @@
+services:
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_php_site1
+    volumes:
+      - ./public:/site1/public
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php-fpm
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nginx.rule=Host(`polatsik.com`)
+      - traefik.http.routers.nginx.entrypoints=websecure
+      - traefik.http.services.nginx.loadbalancer.server.port=8001
+    networks:
+      - website1
+      
+  php-fpm:
+    image: php:8.3-fpm-alpine
+    healthcheck:
+      test: ["CMD", "php-fpm", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    ports:
+      - 9000:9000
+    volumes:
+     - ./:/site1
+    networks:
+      - website1
+     
+networks:
+  website1:
+    name: proxy
+    external: true
